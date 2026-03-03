@@ -25,6 +25,9 @@ import {
   cilPuzzle,
   cilSpeedometer,
   cilStar,
+  cilPeople,
+  cilVideo,
+  cilCreditCard,
 } from '@coreui/icons'
 import { CNavGroup, CNavItem, CNavTitle } from '@coreui/react'
 
@@ -84,6 +87,28 @@ const _nav = [
       color: 'info',
       text: 'NEW',
     },
+  },
+  {
+    component: CNavTitle,
+    name: 'Shortsy Admin',
+  },
+  {
+    component: CNavItem,
+    name: 'Users',
+    to: '/users',
+    icon: <CIcon icon={cilPeople} customClassName="nav-icon" />,
+  },
+  {
+    component: CNavItem,
+    name: 'Content',
+    to: '/content',
+    icon: <CIcon icon={cilVideo} customClassName="nav-icon" />,
+  },
+  {
+    component: CNavItem,
+    name: 'Orders',
+    to: '/orders',
+    icon: <CIcon icon={cilCreditCard} customClassName="nav-icon" />,
   },
   {
     component: CNavTitle,

@@ -17,6 +17,17 @@ import React from 'react'
 
 // Dashboard
 const Dashboard = React.lazy(() => import('./views/dashboard/Dashboard'))
+
+// Shortsy Admin - Users
+const Users = React.lazy(() => import('./views/users/Users'))
+
+// Shortsy Admin - Content
+const Content = React.lazy(() => import('./views/content/Content'))
+
+// Shortsy Admin - Orders
+const Orders = React.lazy(() => import('./views/orders/Orders'))
+
+// Theme
 const Colors = React.lazy(() => import('./views/theme/colors/Colors'))
 const Typography = React.lazy(() => import('./views/theme/typography/Typography'))
 
@@ -87,6 +98,9 @@ const Widgets = React.lazy(() => import('./views/widgets/Widgets'))
 const routes = [
   { path: '/', exact: true, name: 'Home' },
   { path: '/dashboard', name: 'Dashboard', element: Dashboard },
+  { path: '/users', name: 'Users', element: Users },
+  { path: '/content', name: 'Content', element: Content },
+  { path: '/orders', name: 'Orders', element: Orders },
   { path: '/theme', name: 'Theme', element: Colors, exact: true },
   { path: '/theme/colors', name: 'Colors', element: Colors },
   { path: '/theme/typography', name: 'Typography', element: Typography },
