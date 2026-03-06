@@ -194,6 +194,16 @@ export async function addContent(data) {
 }
 
 /**
+ * Update content by ID
+ */
+export async function updateContent(contentId, data) {
+  return apiRequest(`/content/${contentId}`, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  })
+}
+
+/**
  * Fetch all rentals
  */
 export async function fetchRentals() {
@@ -219,6 +229,13 @@ export async function fetchOrders() {
  */
 export async function fetchAnalytics() {
   return apiRequest('/admin/analytics')
+}
+
+/**
+ * Fetch API metrics from CloudWatch
+ */
+export async function fetchApiMetrics(period = '24h') {
+  return apiRequest(`/admin/api-metrics?period=${period}`)
 }
 
 /**

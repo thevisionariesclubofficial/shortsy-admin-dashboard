@@ -52,6 +52,7 @@ import avatar6 from 'src/assets/images/avatars/6.jpg'
 
 import WidgetsBrand from '../widgets/WidgetsBrand'
 import WidgetsDropdown from '../widgets/WidgetsDropdown'
+import ApiMetricsWidget from '../widgets/ApiMetricsWidget'
 import MainChart from './MainChart'
 
 const Dashboard = () => {
@@ -179,6 +180,7 @@ const Dashboard = () => {
   return (
     <>
       <WidgetsDropdown className="mb-4" />
+      <ApiMetricsWidget />
       <CCard className="mb-4">
         <CCardBody>
           <CRow>

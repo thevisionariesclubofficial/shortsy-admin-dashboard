@@ -26,10 +26,12 @@ import {
   CAlert,
   CInputGroup,
   CInputGroupText,
+  CFormSwitch,
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
-import { cilReload, cilVideo, cilTv, cilPlus, cilTrash } from '@coreui/icons'
-import { fetchContent, addContent } from '../../services/api'
+import { cilReload, cilVideo, cilTv, cilPlus, cilTrash, cilStar } from '@coreui/icons'
+import { fetchContent, addContent, updateContent } from '../../services/api'
+import FileUpload from '../../components/FileUpload'
 
 const Content = () => {
   const [activeTab, setActiveTab] = useState('vertical-series')
@@ -109,7 +111,7 @@ const Content = () => {
       // Type-specific fields
       if (formData.type === 'short-film') {
         if (!formData.videoUrl) {
-          setFormError('Video URL is required for short films')
+          setFormError('Please upload a video file and wait for the upload to complete before submitting')
           setSubmitting(false)
           return
         }
@@ -206,6 +208,35 @@ const Content = () => {
     return content.filter((item) => item.type === type)
   }
 
+  const handleToggleFeatured = async (contentId, currentValue) => {
+    try {
+      // If setting to featured, unfeature all other content first
+      if (!currentValue) {
+        const featuredContent = content.find(item => item.featured && item.id !== contentId)
+        if (featuredContent) {
+          await updateContent(featuredContent.id, { featured: false })
+        }
+      }
+      
+      // Toggle the selected content
+      await updateContent(contentId, { featured: !currentValue })
+      await loadContent() // Reload to get updated data
+    } catch (err) {
+      console.error('Error toggling featured:', err)
+      setError(err.message || 'Failed to update featured status')
+    }
+  }
+
+  const handleToggleFestivalWinner = async (contentId, currentValue) => {
+    try {
+      await updateContent(contentId, { festivalWinner: !currentValue })
+      await loadContent() // Reload to get updated data
+    } catch (err) {
+      console.error('Error toggling festival winner:', err)
+      setError(err.message || 'Failed to update festival winner status')
+    }
+  }
+
   const verticalSeries = filterContentByType('vertical-series')
   const shortFilms = filterContentByType('short-film')
 
@@ -261,6 +292,33 @@ const Content = () => {
               {item.type === 'vertical-series' ? 'Series' : 'Film'}
             </CBadge>
           </div>
+          {item.featured && (
+            <div
+              style={{
+                position: 'absolute',
+                top: 6,
+                left: 6,
+              }}
+            >
+              <CBadge color="warning" style={{ fontSize: '0.7rem' }}>
+                <CIcon icon={cilStar} size="sm" className="me-1" />
+                Featured
+              </CBadge>
+            </div>
+          )}
+          {item.festivalWinner && (
+            <div
+              style={{
+                position: 'absolute',
+                top: item.featured ? 32 : 6,
+                left: 6,
+              }}
+            >
+              <CBadge color="danger" style={{ fontSize: '0.7rem' }}>
+                🏆 Winner
+              </CBadge>
+            </div>
+          )}
         </div>
         <CCardBody className="p-2">
           <h6 className="mb-1 text-truncate" title={item.title} style={{ fontSize: '0.9rem' }}>
@@ -280,6 +338,26 @@ const Content = () => {
               <small className="text-muted" style={{ fontSize: '0.7rem' }}>{item.episodes} Episodes</small>
             </div>
           )}
+          <div className="mt-2 pt-2" style={{ borderTop: '1px solid #e0e0e0' }}>
+            <div className="d-flex justify-content-between align-items-center mb-1">
+              <small style={{ fontSize: '0.7rem' }}>Featured</small>
+              <CFormSwitch
+                size="sm"
+                id={`featured-${item.id}`}
+                checked={item.featured || false}
+                onChange={() => handleToggleFeatured(item.id, item.featured)}
+              />
+            </div>
+            <div className="d-flex justify-content-between align-items-center">
+              <small style={{ fontSize: '0.7rem' }}>Festival Winner</small>
+              <CFormSwitch
+                size="sm"
+                id={`festival-${item.id}`}
+                checked={item.festivalWinner || false}
+                onChange={() => handleToggleFestivalWinner(item.id, item.festivalWinner)}
+              />
+            </div>
+          </div>
         </CCardBody>
       </CCard>
     </CCol>
@@ -423,18 +501,19 @@ const Content = () => {
             </CRow>
 
             <CRow className="mb-3">
-              <CCol md={6}>
-                <CFormLabel htmlFor="thumbnail">Thumbnail URL *</CFormLabel>
-                <CFormInput
-                  type="url"
-                  id="thumbnail"
-                  name="thumbnail"
+              <CCol md={12}>
+                <FileUpload
+                  label="Thumbnail Image"
+                  type="image"
                   value={formData.thumbnail}
-                  onChange={handleInputChange}
-                  placeholder="https://..."
+                  onChange={(url) => setFormData(prev => ({ ...prev, thumbnail: url }))}
                   required
+                  helpText="Upload a thumbnail image (max 10MB). Supported formats: JPEG, PNG, WebP, GIF"
                 />
               </CCol>
+            </CRow>
+
+            <CRow className="mb-3">
               <CCol md={6}>
                 <CFormLabel htmlFor="duration">Duration *</CFormLabel>
                 <CFormInput
@@ -553,17 +632,18 @@ const Content = () => {
             </div>
 
             <CRow className="mb-3">
-              <CCol md={6}>
-                <CFormLabel htmlFor="trailer">Trailer URL</CFormLabel>
-                <CFormInput
-                  type="url"
-                  id="trailer"
-                  name="trailer"
+              <CCol md={12}>
+                <FileUpload
+                  label="Trailer Video (Optional)"
+                  type="trailer"
                   value={formData.trailer}
-                  onChange={handleInputChange}
-                  placeholder="https://..."
+                  onChange={(url) => setFormData(prev => ({ ...prev, trailer: url }))}
+                  helpText="Upload a trailer video (max 500MB). Supported formats: MP4, WebM, OGG, MOV"
                 />
               </CCol>
+            </CRow>
+
+            <CRow className="mb-3">
               <CCol md={6}>
                 <CFormLabel htmlFor="views">Views</CFormLabel>
                 <CFormInput
@@ -579,15 +659,13 @@ const Content = () => {
 
             {formData.type === 'short-film' && (
               <div className="mb-3">
-                <CFormLabel htmlFor="videoUrl">Video URL *</CFormLabel>
-                <CFormInput
-                  type="url"
-                  id="videoUrl"
-                  name="videoUrl"
+                <FileUpload
+                  label="Main Video"
+                  type="video"
                   value={formData.videoUrl}
-                  onChange={handleInputChange}
-                  placeholder="https://..."
+                  onChange={(url) => setFormData(prev => ({ ...prev, videoUrl: url }))}
                   required
+                  helpText="Upload the main video file (max 500MB). Supported formats: MP4, WebM, OGG, MOV"
                 />
               </div>
             )}
@@ -641,7 +719,7 @@ const Content = () => {
                               size="sm"
                             />
                           </CCol>
-                          <CCol md={6}>
+                          <CCol md={12}>
                             <CFormInput
                               type="text"
                               placeholder="Duration (e.g., 10min) *"
@@ -651,24 +729,24 @@ const Content = () => {
                               size="sm"
                             />
                           </CCol>
-                          <CCol md={6}>
-                            <CFormInput
-                              type="url"
-                              placeholder="Thumbnail URL *"
+                          <CCol md={12}>
+                            <FileUpload
+                              label="Episode Thumbnail"
+                              type="image"
                               value={episode.thumbnail}
-                              onChange={(e) => updateEpisode(index, 'thumbnail', e.target.value)}
+                              onChange={(url) => updateEpisode(index, 'thumbnail', url)}
                               required
-                              size="sm"
+                              id={`episode-thumbnail-${index}`}
                             />
                           </CCol>
                           <CCol md={12}>
-                            <CFormInput
-                              type="url"
-                              placeholder="Video URL *"
+                            <FileUpload
+                              label="Episode Video"
+                              type="video"
                               value={episode.videoUrl}
-                              onChange={(e) => updateEpisode(index, 'videoUrl', e.target.value)}
+                              onChange={(url) => updateEpisode(index, 'videoUrl', url)}
                               required
-                              size="sm"
+                              id={`episode-video-${index}`}
                             />
                           </CCol>
                         </CRow>

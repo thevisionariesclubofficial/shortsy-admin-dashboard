@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import PropTypes from 'prop-types'
 
 import {
@@ -14,10 +14,37 @@ import { getStyle } from '@coreui/utils'
 import { CChartBar, CChartLine } from '@coreui/react-chartjs'
 import CIcon from '@coreui/icons-react'
 import { cilArrowBottom, cilArrowTop, cilOptions } from '@coreui/icons'
+import { fetchAnalytics } from '../../services/api'
 
 const WidgetsDropdown = (props) => {
   const widgetChartRef1 = useRef(null)
   const widgetChartRef2 = useRef(null)
+  const [analytics, setAnalytics] = useState({
+    users: { total: 0, change: 0 },
+    revenue: { total: 0, count: 0, change: 0 },
+    content: { shortFilms: 0, verticalSeries: 0, total: 0 },
+  })
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    // Fetch analytics data
+    const loadAnalytics = async () => {
+      try {
+        const data = await fetchAnalytics()
+        setAnalytics(data)
+      } catch (error) {
+        console.error('Failed to load analytics:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadAnalytics()
+
+    // Refresh analytics every 30 seconds
+    const interval = setInterval(loadAnalytics, 30000)
+    return () => clearInterval(interval)
+  }, [])
 
   useEffect(() => {
     document.documentElement.addEventListener('ColorSchemeChange', () => {
@@ -44,9 +71,9 @@ const WidgetsDropdown = (props) => {
           color="primary"
           value={
             <>
-              26K{' '}
+              {loading ? '...' : analytics.users.total.toLocaleString()}{' '}
               <span className="fs-6 fw-normal">
-                (-12.4% <CIcon icon={cilArrowBottom} />)
+                ({analytics.users.change > 0 ? '+' : ''}{analytics.users.change}% {analytics.users.change >= 0 ? <CIcon icon={cilArrowTop} /> : <CIcon icon={cilArrowBottom} />})
               </span>
             </>
           }
@@ -134,13 +161,13 @@ const WidgetsDropdown = (props) => {
           color="info"
           value={
             <>
-              $6.200{' '}
+              ₹{loading ? '...' : analytics.revenue.total.toLocaleString()}{' '}
               <span className="fs-6 fw-normal">
-                (40.9% <CIcon icon={cilArrowTop} />)
+                ({analytics.revenue.count} orders)
               </span>
             </>
           }
-          title="Income"
+          title="Total Revenue"
           action={
             <CDropdown alignment="end">
               <CDropdownToggle color="transparent" caret={false} className="text-white p-0">
@@ -223,13 +250,13 @@ const WidgetsDropdown = (props) => {
           color="warning"
           value={
             <>
-              2.49%{' '}
+              {loading ? '...' : analytics.content.shortFilms}{' '}
               <span className="fs-6 fw-normal">
-                (84.7% <CIcon icon={cilArrowTop} />)
+                ({analytics.content.total} total)
               </span>
             </>
           }
-          title="Conversion Rate"
+          title="Short Films"
           action={
             <CDropdown alignment="end">
               <CDropdownToggle color="transparent" caret={false} className="text-white p-0">
@@ -295,13 +322,13 @@ const WidgetsDropdown = (props) => {
           color="danger"
           value={
             <>
-              44K{' '}
+              {loading ? '...' : analytics.content.verticalSeries}{' '}
               <span className="fs-6 fw-normal">
-                (-23.6% <CIcon icon={cilArrowBottom} />)
+                (Series)
               </span>
             </>
           }
-          title="Sessions"
+          title="Vertical Series"
           action={
             <CDropdown alignment="end">
               <CDropdownToggle color="transparent" caret={false} className="text-white p-0">
